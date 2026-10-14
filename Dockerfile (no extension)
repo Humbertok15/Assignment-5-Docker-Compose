@@ -1,0 +1,29 @@
+# Stage 1: Build the frontend application
+FROM node:18-alpine AS build
+
+# Set the working directory
+WORKDIR /app
+
+# Copy dependency manifests first for better build caching
+COPY package*.json ./
+
+# Install frontend dependencies
+RUN npm install
+
+# Copy the frontend source code
+COPY . .
+
+# Build the optimized production application
+RUN npm run build
+
+# Stage 2: Serve the production build with Nginx
+FROM nginx:alpine
+
+# Copy the compiled frontend files into Nginx's web directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose Nginx's default HTTP port
+EXPOSE 80
+
+# Run Nginx in the foreground so the container stays running
+CMD ["nginx", "-g", "daemon off;"]
